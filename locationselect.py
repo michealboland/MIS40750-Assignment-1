@@ -32,6 +32,14 @@ def dist_calc(lat1,lon1,lat2,lon2):
     
 #----------------------------------------------------------------------------------------
 
+def dist_compare(lt,ln,cur):
+    for j in cur:
+        print lt
+        print ln
+        print j
+
+
+
 # Importing relevant modules
 import sqlite3
 import numpy as np
@@ -39,17 +47,36 @@ import math
 
 # Read in values of location from location table on renewable.db
 conn = sqlite3.connect("renewable.db")
-curs = conn.cursor()
-loc_lat = curs.execute("select * from location")
+c_loc1 = conn.cursor()
+c_loc2 = conn.cursor()
+c_por = conn.cursor()
+c_loc1.execute("select * from location")
+l_loc = {}
+loc_num = 1
 
-for i in loc_lat:
-    print i
+for i in c_loc1:
+    
+    cost = 0
+    prod_sum = 0
+    port_num = 1
+    
+    c_loc2.execute("select * from location")
+    for j in c_loc2:
+        # The total cost per tonne per km to each location from all other locations is calculated        
+        cost += dist_calc(i[0],i[1],j[0],j[1])*j[2]
+        prod_sum += j[2]
+        
+    print "Location: %d %f %f" % (loc_num,cost,prod_sum)
+    
+    loc_num += 1
+    
+#    c_por.execute("select * from ports")
+#    for k in c_por:
+#        l_loc["%d %d" % (loc_num,port_num)] = cost + (dist_calc(i[0],i[1],k[0],k[1])*prod_sum)    
+#        port_num += 1
+#        
+#    loc_num += 1
+    
 
-# Distance between these points ~1.05 km
-lt1 = 53.355
-ln1 = -6.448
-lt2 = 53.356
-ln2 = -6.433
-
-print dist_calc(lt1,ln1,lt2,ln2)
+    
     
