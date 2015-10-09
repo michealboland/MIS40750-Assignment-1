@@ -14,6 +14,10 @@ Date: 3/10/2015
 
 """
 
+# Importing relevant modules
+import sqlite3
+import math  
+
 #----------------------------------------------------------------------------------------
 # Function to calculate distance between two point from their latitudes and longitudes
 # This function uses the Haversines formula
@@ -21,8 +25,8 @@ Date: 3/10/2015
 #         lat2, lon2: latitude and longitude of location 2
 # Output: dist_calc: distance between the two points
 
-def dist_calc(lat1,lon1,lat2,lon2):
-    # Splitting Havesine formula into two parts for conciseness.    
+def dist_calc(lon1,lat1,lon2,lat2):
+    # Splitting Havesine formula into two parts for neatness    
     h = ((math.sin((math.radians(lat2)-math.radians(lat1))/2))**2) + \
     math.cos(math.radians(lat1))*math.cos(math.radians(lat2))* \
     ((math.sin((math.radians(lon2)-math.radians(lon1))/2))**2)   
@@ -32,51 +36,43 @@ def dist_calc(lat1,lon1,lat2,lon2):
     
 #----------------------------------------------------------------------------------------
 
-def dist_compare(lt,ln,cur):
-    for j in cur:
-        print lt
-        print ln
-        print j
-
-
-
-# Importing relevant modules
-import sqlite3
-import numpy as np
-import math  
-
-# Read in values of location from location table on renewable.db
+# Establishing connection to database using sqlite3
 conn = sqlite3.connect("renewable.db")
-c_loc1 = conn.cursor()
-c_loc2 = conn.cursor()
-c_por = conn.cursor()
-c_loc1.execute("select * from location")
-l_loc = {}
-loc_num = 1
 
-for i in c_loc1:
-    
+# Creation of cursor objects
+c1 = conn.cursor()
+c2 = conn.cursor()
+
+# Creation of an empty dictionary
+dictloc = {}
+prodsum = 0
+
+# The overall production volume is needed. This only needs to be calculated once
+c1.execute("select production from location")
+for prod in c1:
+    prodsum += prod[0]
+
+# First cursor will execute select command from location table
+c1.execute("select long,lat from location")
+for loc1 in c1:
+    # Here cost is the product of production volume times distance travelled
     cost = 0
-    prod_sum = 0
-    port_num = 1
     
-    c_loc2.execute("select * from location")
-    for j in c_loc2:
-        # The total cost per tonne per km to each location from all other locations is calculated        
-        cost += dist_calc(i[0],i[1],j[0],j[1])*j[2]
-        prod_sum += j[2]
-        
-    print "Location: %d %f %f" % (loc_num,cost,prod_sum)
+    # The cost to each location from all others is calculated
+    c2.execute("select long,lat,production from location")
+    for loc2 in c2:
+        cost += dist_calc(loc1[0],loc1[1],loc2[0],loc2[1]) * loc2[2]
     
-    loc_num += 1
-    
-#    c_por.execute("select * from ports")
-#    for k in c_por:
-#        l_loc["%d %d" % (loc_num,port_num)] = cost + (dist_calc(i[0],i[1],k[0],k[1])*prod_sum)    
-#        port_num += 1
-#        
-#    loc_num += 1
-    
+    # Calculate cost of moving all produce from each location to each port
+    c2.execute("select long,lat from ports")
+    for por in c2:
+        # Dictionary key is a string referencing the location and port. Value is total cost
+        # Total Cost = (Cost to each location from all others)+(Cost of moving from location to each port)
+        dictloc["Location at Lat: %f Long: %f with Port at Lat: %f Long: %f" % (loc1[0],loc1[1],por[0],por[1])] = \
+        cost + (dist_calc(loc1[0],loc1[1],por[0],por[1]) * prodsum)    
 
-    
-    
+# Final step is to retrieve the key in the dictionary for which the value is lowest
+result = min(dictloc.items(), key=lambda x: x[1])
+
+# Result printed to screen
+print "%s is the most cost effective solution with a total cost of %f tonnes.km" %(result[0],result[1])
