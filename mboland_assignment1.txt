@@ -1,0 +1,42 @@
+MIS40750 Assignment 1
+Student Name: Micheál Boland
+Student Number: 15204343
+Date: 09/10/2015
+Python File Name: locationselect.py
+
+Assignment Goal:
+	
+	The goal is to find the plant location and port that will result in the lowest road transportation costs.
+
+Inputs:
+	
+	In the location table of renewable.db we are given three columns namely long, lat and production.
+	In the port table of renewable.db we are given two columns namely long and lat.
+
+Assumptions:
+	
+	There are several factors in the calculation of the road transportation cost. In this case, the distance and production mass to be transported
+	are only supplied. 
+	It is assumed that the total transportation costs is calculated as (Distance Travelled * Total mass to be transported * "Other Variables")
+	The value of "Other Variables", would include, but not limited to, factors such as labour cost and fuel. 
+	For the purposes of the assignment, it is assumed that that value of "Other Variables" is constant for all locations.
+
+Program High Level Flow:
+	
+	Based on the above assumptions, its therefore the goal of the assignment to find the combination of location and port that gives the lowest value
+	of the product of total distance travelled times the mass of the production materials. 
+	
+	To calculate the distance travelled, a function is created using the Haversines Formula http://www.longitudestore.com/haversine-formula.html
+	
+	The cost is split into two elements. The first element is the cost of transporting materials to each location from every other location. Again the total
+	cost per location is the sum of the products of distance travelled to that location times the mass that is transported. 
+	The second element of cost is the cost of transporting all materials from each location to each port. Note that the total mass transported to the
+	ports from each location will always be the same. The distance to each port and the cost of getting the materials from all other locations will be different.
+	A nested for loop is used to calculate the cost for each location and port.
+	
+	It has been decided to store the results in a python dictionary where the key is a string reference to the location of the plant and each port.
+	The value is then the total cost for that combination. The key in the dictionary that has the minimum value is then printed to the screen.
+	
+Solution:
+
+	Location at Lat: 52.340000 Long: 6.480000 with Port at Lat: 52.270000 Long: 6.390000 is the most cost effective solution with a total cost of 261535898.672219 tonnes.km
